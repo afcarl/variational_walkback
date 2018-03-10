@@ -58,6 +58,9 @@ def train(sess,
 
 
 def generate_check(sess, generate_model):
+  pass
+  
+  """
   images = generate_model.generate(sess, 10)
 
   image_dir = flags.save_dir + "/generated"
@@ -67,6 +70,7 @@ def generate_check(sess, generate_model):
   for i in range(len(images)):
     image = images[i].reshape((28, 28))
     imsave(image_dir + "/gen_{0}.png".format(i), image)
+  """
 
     
 def load_checkpoints(sess):
@@ -102,13 +106,15 @@ def main(argv):
 
   sess = tf.Session()
 
+  step_size = 20
+
   train_model    = VariationalWalkback(alpha=flags.alpha,
                                        learning_rate=flags.learning_rate,
-                                       reuse=False,
+                                       step_size=step_size,
                                        training=True)
   generate_model = VariationalWalkback(alpha=flags.alpha,
                                        learning_rate=flags.learning_rate,
-                                       reuse=True,
+                                       step_size=step_size,
                                        training=False)
 
   init_op = tf.group(tf.global_variables_initializer(),
