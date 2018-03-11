@@ -22,8 +22,7 @@ flags = tf.app.flags.FLAGS
 
 
 def train(sess,
-          train_model,
-          generate_model,
+          model,
           data_manager,
           saver,
           start_step):
@@ -43,25 +42,22 @@ def train(sess,
     for i in range(total_batch):
       batch_xs = data_manager.get_next_train_batch(flags.batch_size)
       
-      loss = train_model.train(sess, batch_xs)
+      loss = model.train(sess, batch_xs)
       print("loss={}".format(loss))
       #summary_writer.add_summary(summary_str, step)
       
       step += 1
 
       if step % 100 == 0:
-        generate_check(sess, generate_model)
+        generate_check(sess, model)
 
     if epoch % 20:
       # Save checkpoint
       save_checkponts(sess, saver, step)
 
 
-def generate_check(sess, generate_model):
-  pass
-  
-  """
-  images = generate_model.generate(sess, 10)
+def generate_check(sess, model):
+  images = model.generate(sess, 10)
 
   image_dir = flags.save_dir + "/generated"
   if not os.path.exists(image_dir):
@@ -70,7 +66,7 @@ def generate_check(sess, generate_model):
   for i in range(len(images)):
     image = images[i].reshape((28, 28))
     imsave(image_dir + "/gen_{0}.png".format(i), image)
-  """
+
 
     
 def load_checkpoints(sess):
@@ -108,14 +104,9 @@ def main(argv):
 
   step_size = 20
 
-  train_model    = VariationalWalkback(alpha=flags.alpha,
-                                       learning_rate=flags.learning_rate,
-                                       step_size=step_size,
-                                       training=True)
-  generate_model = VariationalWalkback(alpha=flags.alpha,
-                                       learning_rate=flags.learning_rate,
-                                       step_size=step_size,
-                                       training=False)
+  model = VariationalWalkback(alpha=flags.alpha,
+                              learning_rate=flags.learning_rate,
+                              step_size=step_size)
 
   init_op = tf.group(tf.global_variables_initializer(),
                      tf.local_variables_initializer())
@@ -123,7 +114,7 @@ def main(argv):
   
   saver, start_step = load_checkpoints(sess)
 
-  train(sess, train_model, generate_model, data_manager, saver, start_step)
+  train(sess, model, data_manager, saver, start_step)
   
 
 if __name__ == '__main__':

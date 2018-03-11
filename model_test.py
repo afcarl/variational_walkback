@@ -7,6 +7,7 @@ import tensorflow as tf
 import numpy as np
 from model import VariationalWalkback, TransitionOperator
 
+
 class TransitionOperatorTest(tf.test.TestCase):
   def test_init(self):
     alpha = 0.5
@@ -23,63 +24,50 @@ class TransitionOperatorTest(tf.test.TestCase):
     ln_var_size_adam = 2*2
 
     # Step0でTransitionOperator作成
-    trans_op0 = TransitionOperator(0, alpha, learning_rate, training=True)
-    variables0 = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,
-                                   scope="transition_op")
-
-    for v in variables0:
-      print(v.name)
+    trans_op0 = TransitionOperator(0, alpha, learning_rate)
+    variables_global0 = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,
+                                   scope="transition_op_global")
+    variables_local0 = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,
+                                         scope="transition_op_local0")
     
-    var_size0 = conv_var_size*6 + bn_var_size*4 + fc_var_size*5 + ln_var_size*5 + \
-    conv_var_size_adam*6 + bn_var_size_adam*4 + fc_var_size_adam*5 + ln_var_size_adam*5 + \
-    + 2 
-    # 48+64+2
-    # +2は、beta1_power, beta2_powerの分
-
+    var_size_global0 = conv_var_size*6 + fc_var_size*5
+    var_size_local0  = bn_var_size*4 + ln_var_size*5 + \
+                       conv_var_size_adam*6 + bn_var_size_adam*4 + \
+                       fc_var_size_adam*5 + ln_var_size_adam*5 + \
+                       + 2 # +2は、beta1_power, beta2_powerの分
+    
+    #print("len(variables_global0)={}".format(len(variables_global0))) # 22
+    #print("len(variables_local0)={}".format(len(variables_local0)))   # 108
+    
     # variable数を確認
-    self.assertEqual(len(variables0), var_size0)
+    self.assertEqual(len(variables_global0), var_size_global0)
+    self.assertEqual(len(variables_local0),  var_size_local0)
+
 
     # Step1でTransitionOperator作成
-    trans_op1 = TransitionOperator(1, alpha, learning_rate, training=True)
-    variables1 = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,
-                                   scope="transition_op")
-    # Batch Norm, Layer Normの分だけvariable数が増えているのを確認
-    var_size1 = var_size0 + \
-                bn_var_size*4 + ln_var_size*5 + \
-                bn_var_size_adam*4 + ln_var_size_adam*5 + \
-                2
+    trans_op1 = TransitionOperator(1, alpha, learning_rate)
 
-    self.assertEqual(len(variables1), var_size1)
+    variables_global1 = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,
+                                          scope="transition_op_global")
+    variables_local1 = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,
+                                         scope="transition_op_local1")
     
-    # training=Falseで作成
-    trans_gen_op0 = TransitionOperator(0, alpha, learning_rate, training=False)
-    trans_gen_op1 = TransitionOperator(1, alpha, learning_rate, training=False)
+    #print("len(variables_global1)={}".format(len(variables_global1))) # 22
+    #print("len(variables_local1)={}".format(len(variables_local1)))   # 108
 
-    variables1 = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,
-                                   scope="transition_op")
-    self.assertEqual(len(variables1), var_size1)
+    self.assertEqual(len(variables_global1), var_size_global0)
+    self.assertEqual(len(variables_local1),  var_size_local0)
 
 
-"""
+
 class VariationalWalkbackTest(tf.test.TestCase):
   def get_batch_images(self, batch_size):
-    image = np.zeros((28*28), dtype=np.float32)
-    batch_images = [image] * batch_size
+    batch_images = np.zeros((batch_size, 28*28), dtype=np.float32)
     return batch_images
 
 
-  def test_init(self):
-    model = VariationalWalkback()
-    
-    with self.test_session() as sess:
-      sess.run(tf.global_variables_initializer())
-
-      self.assertEqual(model.loss.get_shape(), ())
-      self.assertEqual(model.x_hat.get_shape()[1], 28*28)
-
-
   def test_train(self):
-    model = VariationalWalkback()
+    model = VariationalWalkback(step_size=2)
     
     with self.test_session() as sess:
       sess.run(tf.global_variables_initializer())
@@ -89,14 +77,8 @@ class VariationalWalkbackTest(tf.test.TestCase):
 
       self.assertEqual(loss.shape, ())
 
-
-  def test_reuse(self):
-    model0 = VariationalWalkback(reuse=False, training=True)
-    model1 = VariationalWalkback(reuse=True, training=False)
-
-
   def test_geneate(self):
-    model = VariationalWalkback()
+    model = VariationalWalkback(step_size=2)
     
     with self.test_session() as sess:
       sess.run(tf.global_variables_initializer())
@@ -104,7 +86,6 @@ class VariationalWalkbackTest(tf.test.TestCase):
       images = model.generate(sess, 10)
 
       self.assertEqual(images.shape, (10, 28*28))
-"""
 
 
 
