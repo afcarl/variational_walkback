@@ -172,9 +172,11 @@ class VariationalWalkback(object):
   def __init__(self,
                alpha=0.5, # 大きいほど元のxに近づける
                learning_rate=1e-4,
-               step_size=20):
+               step_size=30,
+               extra_step_size=10):
     
     self.step_size = step_size
+    self.extra_step_size = extra_step_size
     self._prepare(alpha, learning_rate)
 
   def _prepare(self, alpha, learning_rate):
@@ -188,7 +190,6 @@ class VariationalWalkback(object):
 
     print("end preparing network")
       
-
   def train(self, sess, images):
     xs = images
     total_loss = 0
@@ -205,13 +206,16 @@ class VariationalWalkback(object):
       xs = new_xs
       total_loss += loss
 
+    total_loss /= self.step_size
     return total_loss
 
   def generate(self, sess, generate_size):
     xs = np.random.normal(0.5, 2.0, size=(generate_size, 28*28)).clip(0.0, 1.0)
     xs = xs.astype(np.float32)
 
-    for i in reversed(range(self.step_size)):
+    for i in reversed(range(-self.extra_step_size, self.step_size)):
+      if i < 0:
+        i = 0
       op = self.transition_ops[i]
       new_xs  = sess.run(op.x_hat,
                          feed_dict={
@@ -220,4 +224,3 @@ class VariationalWalkback(object):
                          })
       xs = new_xs
     return xs
-

@@ -67,7 +67,7 @@ class VariationalWalkbackTest(tf.test.TestCase):
 
 
   def test_train(self):
-    model = VariationalWalkback(step_size=2)
+    model = VariationalWalkback(step_size=2, extra_step_size=2)
     
     with self.test_session() as sess:
       sess.run(tf.global_variables_initializer())
@@ -78,7 +78,7 @@ class VariationalWalkbackTest(tf.test.TestCase):
       self.assertEqual(loss.shape, ())
 
   def test_geneate(self):
-    model = VariationalWalkback(step_size=2)
+    model = VariationalWalkback(step_size=2, extra_step_size=2)
     
     with self.test_session() as sess:
       sess.run(tf.global_variables_initializer())
