@@ -17,17 +17,34 @@ class TransitionOperator(object):
     self._prepare_network(step, alpha)
     self._prepare_optimizer(step, learning_rate)
 
+  """
   def _sample(self, mu, log_sigma_sq):
     eps_shape = tf.shape(mu)
     eps = tf.random_normal( eps_shape, 0.0, 1.0, dtype=tf.float32 )
     out = tf.add(mu,
                  tf.multiply(tf.sqrt(tf.exp(log_sigma_sq)), eps))
     return out
+  """
 
+  def _sample(self, mu, sigma_sq):
+    eps_shape = tf.shape(mu)
+    eps = tf.random_normal( eps_shape, 0.0, 1.0, dtype=tf.float32 )
+    out = tf.add(mu,
+                 tf.multiply(tf.sqrt(sigma_sq), eps))
+    return out  
+
+  """
   def _calc_log_likelihood(self, x, mu, log_sigma_sq):
     log_p = -0.5 * tf.log(2.0 * np.pi) \
             - 0.5 * log_sigma_sq \
             - tf.square(x - mu) / (2.0 * tf.exp(log_sigma_sq))
+    return tf.reduce_sum(log_p, 1)
+  """
+
+  def _calc_log_likelihood(self, x, mu, sigma_sq):
+    log_p = -0.5 * tf.log(2.0 * np.pi) \
+            - 0.5 * tf.log(sigma_sq) \
+            - tf.square(x - mu) / (2.0 * sigma_sq)
     return tf.reduce_sum(log_p, 1)
 
   def _prepare_optimizer(self, step, learning_rate):
@@ -126,46 +143,43 @@ class TransitionOperator(object):
                                          kernel_size=[5,5], strides=(2,2),
                                          padding="same",
                                          name="dc1_m")
-    with tf.variable_scope(local_scope_name):
-      dc1_m = tf.layers.batch_normalization(dc1_m, training=self.training,
-                                            name="dc1_m_b".format(step))
-
-    with tf.variable_scope(global_scope_name, reuse=reuse_global):
-      dc1_m = tf.nn.relu(dc1_m) # (-1, 14, 14, 16)
       
-      dc2_m = tf.layers.conv2d_transpose(dc1_m, filters=1,
-                                         kernel_size=[5,5], strides=(2,2),
-                                         padding="same",
-                                         name="dc2_m")
-
       dc1_s = tf.layers.conv2d_transpose(fr5, filters=16,
                                          kernel_size=[5,5], strides=(2,2),
                                          padding="same",
                                          name="dc1_s")
-
+      
     with tf.variable_scope(local_scope_name):
+      dc1_m = tf.layers.batch_normalization(dc1_m, training=self.training,
+                                            name="dc1_m_b".format(step))
       dc1_s = tf.layers.batch_normalization(dc1_s, training=self.training,
                                             name="dc1_s_b".format(step))
 
     with tf.variable_scope(global_scope_name, reuse=reuse_global):
+      dc1_m = tf.nn.relu(dc1_m) # (-1, 14, 14, 16)
+      dc2_m = tf.layers.conv2d_transpose(dc1_m, filters=1,
+                                         kernel_size=[5,5], strides=(2,2),
+                                         padding="same",
+                                         name="dc2_m")
+      dc2_m = tf.layers.flatten(dc2_m) # (-1, 28*28)
+      
       dc1_s = tf.nn.relu(dc1_s) # (-1, 14, 14, 16)
       dc2_s = tf.layers.conv2d_transpose(dc1_s, filters=1,
                                          kernel_size=[5,5], strides=(2,2),
                                          padding="same",
                                          name="dc2_s")
-
-      dc2_m = tf.layers.flatten(dc2_m) # (-1, 28*28)
       dc2_s = tf.layers.flatten(dc2_s) # (-1, 28*28)
+      sigma = tf.nn.softplus(dc2_s) * temperature
+      sigma_sq = tf.sqrt(sigma)
       
       mu = alpha * self.x + (1.0 - alpha) * dc2_m
-      log_sigma_sq = dc2_s + tf.log(temperature)
 
-    with tf.variable_scope(local_scope_name):      
-      x_hat = self._sample(mu, log_sigma_sq)
+    with tf.variable_scope(local_scope_name):
+      x_hat = self._sample(mu, sigma_sq)
       x_hat = tf.clip_by_value(x_hat, 0.0, 1.0)
 
       self.x_hat = x_hat
-      self.log_p = self._calc_log_likelihood(self.x, mu, log_sigma_sq)
+      self.log_p = self._calc_log_likelihood(self.x, mu, sigma_sq)
       
 
 class VariationalWalkback(object):
