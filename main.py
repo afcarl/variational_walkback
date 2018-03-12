@@ -103,7 +103,7 @@ def main(argv):
   sess = tf.Session()
 
   step_size = 30
-  extra_step_size = 10
+  extra_step_size = 5
 
   model = VariationalWalkback(alpha=flags.alpha,
                               learning_rate=flags.learning_rate,
