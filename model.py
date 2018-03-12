@@ -26,12 +26,12 @@ class TransitionOperator(object):
     return out
   """
 
-  def _sample(self, mu, sigma_sq):
+  def _sample(self, mu, sigma, scale=0.00001):
     eps_shape = tf.shape(mu)
     eps = tf.random_normal( eps_shape, 0.0, 1.0, dtype=tf.float32 )
     out = tf.add(mu,
-                 tf.multiply(tf.sqrt(sigma_sq), eps))
-    return out  
+                 tf.multiply(sigma, eps) * scale)
+    return out
 
   """
   def _calc_log_likelihood(self, x, mu, log_sigma_sq):
@@ -169,13 +169,12 @@ class TransitionOperator(object):
                                          padding="same",
                                          name="dc2_s")
       dc2_s = tf.layers.flatten(dc2_s) # (-1, 28*28)
-      sigma = tf.nn.softplus(dc2_s) * temperature
-      sigma_sq = tf.sqrt(sigma)
-      
-      mu = alpha * self.x + (1.0 - alpha) * dc2_m
+      sigma_sq = tf.nn.softplus(dc2_s) * temperature
+      sigma = tf.sqrt(sigma_sq)
+      mu = dc2_m
 
     with tf.variable_scope(local_scope_name):
-      x_hat = self._sample(mu, sigma_sq)
+      x_hat = alpha * self.x + (1.0 - alpha) * self._sample(mu, sigma)
       x_hat = tf.clip_by_value(x_hat, 0.0, 1.0)
 
       self.x_hat = x_hat
