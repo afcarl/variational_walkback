@@ -44,7 +44,8 @@ class TransitionOperator(object):
   def _calc_log_likelihood(self, x, mu, sigma_sq):
     log_p = -0.5 * tf.log(2.0 * np.pi) \
             - 0.5 * tf.log(sigma_sq) \
-            - tf.square(x - mu) / (2.0 * sigma_sq)
+            - tf.square(x - mu) / (2.0 * sigma_sq) \
+            -0.5 * tf.square(x - mu) # ?
     return tf.reduce_sum(log_p, 1)
 
   def _prepare_optimizer(self, step, learning_rate):
