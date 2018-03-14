@@ -57,8 +57,8 @@ def train(sess,
 
 
 def generate_check(sess, model):
-  images = model.generate(sess, 10)
-
+  images, mus, log_sigma_sqs = model.generate(sess, 10)
+  
   image_dir = flags.save_dir + "/generated"
   if not os.path.exists(image_dir):
     os.mkdir(image_dir)
@@ -67,8 +67,18 @@ def generate_check(sess, model):
     image = images[i].reshape((28, 28))
     imsave(image_dir + "/gen_{0}.png".format(i), image)
 
+  # Print mu and sigma at each step.
+  sigma_sqs = np.exp(log_sigma_sqs)
+  for i in range(mus.shape[0]):
+    mu       = mus[i]
+    sigma_sq = sigma_sqs[i]
+    mean_mu       = np.mean(mu)
+    mean_sigma_sq = np.mean(sigma_sq)
+    print("mu[{0}]       = {1:.2f}".format(i, mean_mu))
+    print("sigma_sq[{0}] = {1:.2f}".format(i, mean_sigma_sq))
 
-    
+
+
 def load_checkpoints(sess):
   saver = tf.train.Saver(max_to_keep=2)
   checkpoint_dir = flags.save_dir + "/checkpoints"

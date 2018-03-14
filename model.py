@@ -45,8 +45,8 @@ class TransitionOperator(object):
         self.train_op = optimizer.minimize(self.loss)
 
     
-  def _prepare_network(self, step, alpha):
-    temperature = float(2 ** step)
+  def _prepare_network(self, step, alpha, temperature_rate=1.1):
+    temperature = float(temperature_rate ** step)
 
     reuse_global = step > 0
 
@@ -166,6 +166,10 @@ class TransitionOperator(object):
 
       self.x_hat = x_hat
       self.log_p = self._calc_log_likelihood(self.x, mu, log_sigma_sq)
+      # 分析用に保存
+      self.mu = mu      
+      self.log_sigma_sq = log_sigma_sq
+
       
 
 class VariationalWalkback(object):
@@ -213,14 +217,20 @@ class VariationalWalkback(object):
     xs = np.random.normal(0.5, 2.0, size=(generate_size, 28*28)).clip(0.0, 1.0)
     xs = xs.astype(np.float32)
 
+    mus = []    
+    log_sigma_sqs = []
+
     for i in reversed(range(-self.extra_step_size, self.step_size)):
       if i < 0:
         i = 0
       op = self.transition_ops[i]
-      new_xs  = sess.run(op.x_hat,
-                         feed_dict={
-                           op.x : xs,
-                           op.training : False
-                         })
+      new_xs, mu, log_sigma_sq = sess.run([op.x_hat, op.mu, op.log_sigma_sq],
+                                          feed_dict={
+                                            op.x : xs,
+                                            op.training : False
+                                          })
       xs = new_xs
-    return xs
+      mus.append(mu)
+      log_sigma_sqs.append(log_sigma_sq)
+
+    return xs, np.array(mus), np.array(log_sigma_sqs)
