@@ -74,8 +74,8 @@ def generate_check(sess, model):
     sigma_sq = sigma_sqs[i]
     mean_mu       = np.mean(mu)
     mean_sigma_sq = np.mean(sigma_sq)
-    print("mu[{0}]       = {1:.2f}".format(i, mean_mu))
-    print("sigma_sq[{0}] = {1:.2f}".format(i, mean_sigma_sq))
+    print("mu[{0}]       = {1:.5f}".format(i, mean_mu))
+    print("sigma_sq[{0}] = {1:.5f}".format(i, mean_sigma_sq))
 
 
 
