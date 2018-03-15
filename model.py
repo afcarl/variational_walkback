@@ -45,8 +45,8 @@ class TransitionOperator(object):
         self.train_op = optimizer.minimize(self.loss)
 
     
-  def _prepare_network(self, step, alpha, temperature_rate=1.1):
-    temperature = float(temperature_rate ** step)
+  def _prepare_network(self, step, alpha, temperature_factor=1.1):
+    temperature = float(temperature_factor ** step)
 
     reuse_global = step > 0
 
