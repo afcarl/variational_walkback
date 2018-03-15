@@ -12,6 +12,7 @@ import matplotlib.pylab as plt
 
 from model import VariationalWalkback
 from data_manager import DataManager
+import utils
 
 
 tf.app.flags.DEFINE_string("save_dir", "saved", "checkpoints,log,options save directory")
@@ -23,6 +24,7 @@ tf.app.flags.DEFINE_float("alpha", 0.5, "alpha param for transition op mean outp
 tf.app.flags.DEFINE_float("learning_rate", 1e-4, "learning rate")
 tf.app.flags.DEFINE_string("checkpoint_dir", "checkpoints", "checkpoint directory")
 tf.app.flags.DEFINE_integer("generate_check_interval", 100, "interval to check generation")
+#tf.app.flags.DEFINE_integer("generate_check_interval", 1, "interval to check generation")
 
 flags = tf.app.flags.FLAGS
 
@@ -63,7 +65,7 @@ def train(sess,
 
 
 def generate_check(sess, model):
-  xss, mus, log_sigma_sqs = model.generate(sess, 10)
+  xss, mus, log_sigma_sqs = model.generate(sess, 500)
   
   image_dir = flags.save_dir + "/generated"
   if not os.path.exists(image_dir):
@@ -71,12 +73,9 @@ def generate_check(sess, model):
 
   for i in range(len(xss)):
     xs = xss[i]
-    plt.figure()
-    plt.plot(xs[:,0], xs[:,1], "ro")
     file_name = "generated_{0:0>2}.png".format(i)
     file_path = image_dir + "/" + file_name
-    plt.savefig(file_path)
-    plt.close()
+    utils.save_figure(xs, file_path)
 
   # Print mu and sigma at each step.
   sigma_sqs = np.exp(log_sigma_sqs)

@@ -94,8 +94,8 @@ class VariationalWalkback(object):
 
 
   def generate(self, sess, generate_size):
-    xs = np.random.normal(loc=(-1.1, 0.0),
-                          scale=(0.49, 0.49),
+    xs = np.random.normal(loc=(-0.11, 0.0),
+                          scale=(0.48, 0.49),
                           size=(generate_size, 2))
     xs = xs.astype(np.float32)
 
