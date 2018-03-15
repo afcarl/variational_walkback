@@ -3,7 +3,5 @@ __pycache__
 *.png
 mnist/data
 mnist/saved*
-
-
-
+spiral/saved*
 
