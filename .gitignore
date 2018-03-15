@@ -1,6 +1,9 @@
-data
 *.pyc
 __pycache__
-saved*
 *.png
+mnist/data
+mnist/saved*
+
+
+
 
