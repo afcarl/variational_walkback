@@ -25,7 +25,7 @@ class TransitionOperator(object):
     # Correct denominator should be, (2.0 * tf.square(sigma)) but why?
     return tf.reduce_sum(log_p, 1)
 
-  def _prepare_network(self, alpha, sigma_factor=0.009):
+  def _prepare_network(self, alpha, sigma_factor=1.0):
     with tf.variable_scope("transition_op"):
       self.temperature = tf.placeholder(tf.float32, shape=[],        name="temperature")
       self.x           = tf.placeholder(tf.float32, shape=[None, 2], name="x")
