@@ -21,8 +21,7 @@ class TransitionOperator(object):
   def _calc_log_likelihood(self, x, mu, sigma):
     log_p = -0.5 * tf.log(2.0 * np.pi) \
             - tf.log(sigma) \
-            - tf.square(x - mu) / (2.0 * sigma)
-    # Correct denominator should be, (2.0 * tf.square(sigma)) but why?
+            - tf.square(x - mu) / (2.0 * tf.square(sigma))
     return tf.reduce_sum(log_p, 1)
 
   def _prepare_network(self, alpha, sigma_factor=1.0):
@@ -51,7 +50,7 @@ class TransitionOperator(object):
 
 class VariationalWalkback(object):
   def __init__(self,
-               alpha=0.5, # 大きいほど元のxに近づける
+               alpha=0.5, # Bigger alpha makes x_hat closer to x
                learning_rate=1e-4,
                step_size=30,
                extra_step_size=10):

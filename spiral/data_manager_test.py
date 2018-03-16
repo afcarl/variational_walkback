@@ -40,10 +40,7 @@ class DataManagerTest(unittest.TestCase):
   def test_get_check_batch(self):
     xbatch = self.manager.get_check_batch()
     self.assertTrue(xbatch.shape == (20000,2))
-    #utils.save_figure(xbatch, "check.png")
-    
-    
-    
+    utils.save_figure(xbatch, "spiral_data_dist.png")
 
 if __name__ == '__main__':
   unittest.main()

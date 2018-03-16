@@ -16,9 +16,9 @@ import utils
 
 
 tf.app.flags.DEFINE_string("save_dir", "saved", "checkpoints,log,options save directory")
-tf.app.flags.DEFINE_integer("epoch_size", 5, "epoch size")
+tf.app.flags.DEFINE_integer("epoch_size", 3, "epoch size")
 tf.app.flags.DEFINE_integer("data_size", 20000, "data size")
-tf.app.flags.DEFINE_integer("batch_size", 100, "batch size") #..
+tf.app.flags.DEFINE_integer("batch_size", 100, "batch size")
 tf.app.flags.DEFINE_float("alpha", 0.5, "alpha param for transition op mean output")
 tf.app.flags.DEFINE_float("learning_rate", 1e-5, "learning rate")
 tf.app.flags.DEFINE_string("checkpoint_dir", "checkpoints", "checkpoint directory")
@@ -56,7 +56,7 @@ def train(sess,
     print("generate: epoch={}".format(epoch))
     generate_check(sess, model)
 
-    if epoch % 5 == (5-1):
+    if epoch % 3 == (3-1):
       # Save checkpoint
       save_checkponts(sess, saver, step)
 
