@@ -1,7 +1,9 @@
 *.pyc
 __pycache__
-*.png
 mnist/data
+mnist/*.png
 mnist/saved*
 spiral/saved*
+spiral/*.png
+
 
