@@ -11,20 +11,21 @@ class TransitionOperator(object):
                alpha):
     self._prepare_network(alpha)
 
-  def _sample(self, mu, log_sigma_sq):
+  def _sample(self, mu, sigma):
     eps_shape = tf.shape(mu)
     eps = tf.random_normal( eps_shape, 0.0, 1.0, dtype=tf.float32 )
     out = tf.add(mu,
-                 tf.multiply(tf.sqrt(tf.exp(log_sigma_sq)), eps))
+                 tf.multiply(sigma, eps))
     return out
 
-  def _calc_log_likelihood(self, x, mu, log_sigma_sq):
+  def _calc_log_likelihood(self, x, mu, sigma):
     log_p = -0.5 * tf.log(2.0 * np.pi) \
-            - 0.5 * log_sigma_sq \
-            - tf.square(x - mu) / (2.0 * tf.exp(log_sigma_sq))
+            - tf.log(sigma) \
+            - tf.square(x - mu) / (2.0 * sigma)
+    # Correct denominator should be, (2.0 * tf.square(sigma)) but why?
     return tf.reduce_sum(log_p, 1)
 
-  def _prepare_network(self, alpha):
+  def _prepare_network(self, alpha, sigma_factor=0.009):
     with tf.variable_scope("transition_op"):
       self.temperature = tf.placeholder(tf.float32, shape=[],        name="temperature")
       self.x           = tf.placeholder(tf.float32, shape=[None, 2], name="x")
@@ -32,19 +33,19 @@ class TransitionOperator(object):
       h1 = tf.layers.dense(self.x, 4096, name="fc1", activation=tf.nn.relu)
       h2 = tf.layers.dense(h1,     4096, name="fc2", activation=tf.nn.relu)
       
-      mu_org           = tf.layers.dense(h2, 2, name="mu")
-      log_sigma_sq_org = tf.layers.dense(h2, 2, name="log_sigma_sq")
+      mu_org    = tf.layers.dense(h2, 2, name="mu")
+      sigma_org = tf.layers.dense(h2, 2, name="sigma", activation=tf.nn.softplus)
       
       mu = alpha * self.x + (1.0 - alpha) * mu_org
-      log_sigma_sq = log_sigma_sq_org + tf.log(self.temperature)
+      sigma = sigma_factor * sigma_org * tf.sqrt(self.temperature)
 
-      x_hat = self._sample(mu, log_sigma_sq)
+      x_hat = self._sample(mu, sigma)
 
       self.x_hat = x_hat
-      self.log_p = self._calc_log_likelihood(self.x, mu, log_sigma_sq)
+      self.log_p = self._calc_log_likelihood(self.x, mu, sigma)
       
       self.mu = mu
-      self.log_sigma_sq = log_sigma_sq
+      self.sigma = sigma
 
 
 
@@ -76,8 +77,6 @@ class VariationalWalkback(object):
     total_loss = 0
 
     for i in range(self.step_size):
-      print("pass loop train:{}".format(i)) #..
-      
       temperature = self.temperature_factor ** i
       _, new_xs, loss = sess.run((self.train_op,
                                   self.trans_op.x_hat,
@@ -101,7 +100,7 @@ class VariationalWalkback(object):
 
     xss = []
     mus = []
-    log_sigma_sqs = []
+    sigmas = []
 
     xss.append(xs)
 
@@ -109,17 +108,17 @@ class VariationalWalkback(object):
       if i < 0:
         i = 0
       temperature = self.temperature_factor ** i
-      new_xs, mu, log_sigma_sq = sess.run([self.trans_op.x_hat,
-                                           self.trans_op.mu,
-                                           self.trans_op.log_sigma_sq],
-                                          feed_dict={
-                                            self.trans_op.x : xs,
-                                            self.trans_op.temperature : temperature
-                                          })
+      new_xs, mu, sigma = sess.run([self.trans_op.x_hat,
+                                    self.trans_op.mu,
+                                    self.trans_op.sigma],
+                                   feed_dict={
+                                     self.trans_op.x : xs,
+                                     self.trans_op.temperature : temperature
+                                   })
       xs = new_xs
 
       xss.append(xs)
       mus.append(mu)
-      log_sigma_sqs.append(log_sigma_sq)
+      sigmas.append(sigma)
 
-    return np.array(xss), np.array(mus), np.array(log_sigma_sqs)
+    return np.array(xss), np.array(mus), np.array(sigmas)

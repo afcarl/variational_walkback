@@ -65,7 +65,7 @@ def train(sess,
 
 
 def generate_check(sess, model):
-  xss, mus, log_sigma_sqs = model.generate(sess, 500)
+  xss, mus, sigmas = model.generate(sess, 500)
   
   image_dir = flags.save_dir + "/generated"
   if not os.path.exists(image_dir):
@@ -78,14 +78,13 @@ def generate_check(sess, model):
     utils.save_figure(xs, file_path)
 
   # Print mu and sigma at each step.
-  sigma_sqs = np.exp(log_sigma_sqs)
   for i in range(mus.shape[0]):
-    mu       = mus[i]
-    sigma_sq = sigma_sqs[i]
-    mean_mu       = np.mean(mu)
-    mean_sigma_sq = np.mean(sigma_sq)
-    print("mu[{0}]       = {1:.5f}".format(i, mean_mu))
-    print("sigma_sq[{0}] = {1:.5f}".format(i, mean_sigma_sq))
+    mu    = mus[i]
+    sigma = sigmas[i]
+    mean_mu    = np.mean(mu)
+    mean_sigma = np.mean(sigma)
+    print("mu[{0}]    = {1:.5f}".format(i, mean_mu))
+    print("sigma[{0}] = {1:.5f}".format(i, mean_sigma))
 
 
 

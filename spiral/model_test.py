@@ -39,22 +39,11 @@ class VariationalWalkbackTest(tf.test.TestCase):
     with self.test_session() as sess:
       sess.run(tf.global_variables_initializer())
 
-      data, mus, log_sigma_sqs = model.generate(sess, 10)
+      data, mus, sigmas = model.generate(sess, 10)
 
-      self.assertEqual(data.shape,          (4+1, 10, 2))
-      self.assertEqual(mus.shape,           (4, 10, 2))
-      self.assertEqual(log_sigma_sqs.shape, (4, 10, 2))
-
-      """
-      sigma_sqs = np.exp(log_sigma_sqs)
-      for i in range(mus.shape[0]):
-        mu       = mus[i]
-        sigma_sq = sigma_sqs[i]
-        mean_mu       = np.mean(mu)
-        mean_sigma_sq = np.mean(sigma_sq)
-        print("mu[{0}]       = {1:.2f}".format(i, mean_mu))
-        print("sigma_sq[{0}] = {1:.2f}".format(i, mean_sigma_sq))
-      """
+      self.assertEqual(data.shape,   (4+1, 10, 2))
+      self.assertEqual(mus.shape,    (4, 10, 2))
+      self.assertEqual(sigmas.shape, (4, 10, 2))
 
     
 if __name__ == "__main__":
