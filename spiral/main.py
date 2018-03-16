@@ -16,15 +16,12 @@ import utils
 
 
 tf.app.flags.DEFINE_string("save_dir", "saved", "checkpoints,log,options save directory")
-tf.app.flags.DEFINE_integer("epoch_size", 2000, "epoch size")
+tf.app.flags.DEFINE_integer("epoch_size", 5, "epoch size")
 tf.app.flags.DEFINE_integer("data_size", 20000, "data size")
-#tf.app.flags.DEFINE_integer("batch_size", 5000, "batch size")
 tf.app.flags.DEFINE_integer("batch_size", 100, "batch size") #..
 tf.app.flags.DEFINE_float("alpha", 0.5, "alpha param for transition op mean output")
-tf.app.flags.DEFINE_float("learning_rate", 1e-4, "learning rate")
+tf.app.flags.DEFINE_float("learning_rate", 1e-5, "learning rate")
 tf.app.flags.DEFINE_string("checkpoint_dir", "checkpoints", "checkpoint directory")
-tf.app.flags.DEFINE_integer("generate_check_interval", 100, "interval to check generation")
-#tf.app.flags.DEFINE_integer("generate_check_interval", 1, "interval to check generation")
 
 flags = tf.app.flags.FLAGS
 
@@ -55,11 +52,11 @@ def train(sess,
       #summary_writer.add_summary(summary_str, step)
       
       step += 1
+      
+    print("generate: epoch={}".format(epoch))
+    generate_check(sess, model)
 
-      if step % flags.generate_check_interval == 0:
-        generate_check(sess, model)
-
-    if epoch % 20:
+    if epoch % 5 == (5-1):
       # Save checkpoint
       save_checkponts(sess, saver, step)
 
